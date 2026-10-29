@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MasterCat Friskies – Chat com o Tompero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Figtree:wght@400;500;600;700;800&family=Gochi+Hand&display=swap" rel="stylesheet">
+<style>
+/* Layout: on desktop, a campaign side panel + a phone-sized chat; on mobile, the chat fills the screen. Single theme: the Friskies yellow/crimson world. */
+:root{
+  --red:#A8213A;        /* Friskies crimson */
+  --red-deep:#7E1429;
+  --yellow:#FFCB17;     /* MasterCat yellow */
+  --yellow-soft:#FFE58A;/* outgoing bubble */
+  --cream:#F3E9DA;      /* chat wallpaper */
+  --paper:#FFFDF8;      /* incoming bubble */
+  --ink:#231816;
+  --muted:#7A6A63;
+  --font-display:"Lilita One","Arial Black",Impact,sans-serif;
+  --font-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-hand:"Gochi Hand","Comic Sans MS",cursive;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--yellow);
+  background-image:radial-gradient(circle at 20% 15%,#FFD94A 0,transparent 45%),radial-gradient(circle at 85% 90%,#F5B800 0,transparent 50%);
+  font-family:var(--font-body);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;gap:56px;
+  padding:24px;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+
+/* ---------- Side panel (desktop) ---------- */
+.panel{max-width:380px;display:flex;flex-direction:column;gap:20px}
+.panel img.logo{width:300px;max-width:100%;height:auto}
+.panel h1{font-family:var(--font-display);font-weight:400;color:var(--red);font-size:44px;line-height:1;margin:0;text-wrap:balance;letter-spacing:.5px}
+.panel p{margin:0;font-size:16px;line-height:1.5}
+.panel ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.panel li{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.4}
+.panel li b.n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-weight:400;font-size:16px}
+.mode{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:6px 14px;font-weight:700;font-size:13px}
+.mode i{width:10px;height:10px;border-radius:50%;background:#bbb}
+.mode.on i{background:#2E9E4F;box-shadow:0 0 0 3px #2E9E4F33}
+.mode.demo i{background:var(--red)}
+.panel small{font-size:12.5px;line-height:1.45;color:#5b4a2a}
+
+/* ---------- Phone ---------- */
+.phone{
+  width:400px;height:min(820px,calc(100dvh - 48px));
+  border-radius:44px;background:#1b1210;padding:12px;
+  box-shadow:0 30px 60px -20px #7a4a0080,0 0 0 2px #00000030;
+  flex:none;
+}
+.app{position:relative;height:100%;border-radius:34px;overflow:hidden;display:flex;flex-direction:column;background:var(--cream)}
+
+/* header */
+.top{background:var(--red);color:#fff;display:flex;align-items:center;gap:10px;padding:14px 12px 12px;padding-top:max(14px,env(safe-area-inset-top));flex:none;z-index:2}
+.top .back{width:28px;height:28px;display:grid;place-items:center;opacity:.9;background:none;border:0;padding:0}
+.top img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--yellow)}
+.who{flex:1;min-width:0}
+.who b{display:flex;align-items:center;gap:6px;font-size:17px;font-weight:800}
+.who b svg{flex:none}
+.who span{display:block;font-size:12.5px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who span.busy{color:var(--yellow);opacity:1;font-weight:600}
+.chip{font-family:var(--font-display);font-weight:400;font-size:13px;background:var(--yellow);color:var(--red);border-radius:8px;padding:5px 8px;line-height:1;letter-spacing:.3px;transform:rotate(-3deg)}
+
+/* chat */
+.chat{flex:1;overflow-y:auto;padding:14px 12px 10px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth;
+  background-color:var(--cream);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='%23E4D3BB'%3E%3Cellipse cx='30' cy='36' rx='9' ry='7.5'/%3E%3Ccircle cx='20' cy='24' r='3.6'/%3E%3Ccircle cx='27' cy='19' r='3.6'/%3E%3Ccircle cx='35' cy='19' r='3.6'/%3E%3Ccircle cx='41' cy='25' r='3.6'/%3E%3Cpath d='M98 92c3-6 9-6 12 0 4-3 9 0 7 5 5 2 4 8-1 9 1 5-4 8-8 5-3 5-9 4-10-1-5 0-7-6-3-9-3-4 0-9 3-9z'/%3E%3C/g%3E%3Cg fill='none' stroke='%23E4D3BB' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M88 30h30M94 22v16M102 22v16M110 22v16'/%3E%3Cpath d='M118 30l8-7v14z' fill='%23E4D3BB'/%3E%3Ccircle cx='84' cy='30' r='4'/%3E%3Cpath d='M20 108q10-10 20 0t20 0'/%3E%3C/g%3E%3C/svg%3E");
+}
+.chat>*{flex-shrink:0}
+.day{align-self:center;background:#E8DBC7;color:#6d5a4a;font-size:11.5px;font-weight:700;letter-spacing:.6px;border-radius:8px;padding:5px 10px;margin:2px 0 8px}
+.msg{max-width:84%;position:relative;padding:8px 10px 6px;border-radius:14px;font-size:15px;line-height:1.38;box-shadow:0 1px 0 #00000014;animation:pop .22s ease-out both;overflow-wrap:anywhere}
+.msg.in{align-self:flex-start;background:var(--paper);border-top-left-radius:4px}
+.msg.out{align-self:flex-end;background:var(--yellow-soft);border-top-right-radius:4px}
+.msg.first.in::before,.msg.first.out::before{content:"";position:absolute;top:0;width:10px;height:12px}
+.msg.first.in::before{left:-7px;background:var(--paper);clip-path:polygon(100% 0,0 0,100% 100%)}
+.msg.first.out::before{right:-7px;background:var(--yellow-soft);clip-path:polygon(0 0,100% 0,0 100%)}
+.msg.gap{margin-top:8px}
+.meta{display:flex;justify-content:flex-end;align-items:center;gap:3px;font-size:11px;color:var(--muted);margin-top:2px;margin-left:24px;float:right;position:relative;top:5px}
+.meta svg{width:17px;height:11px}
+.meta .tick{color:#9b8f86;transition:color .3s}
+.meta .tick.read{color:var(--red)}
+.msg p{margin:0}
+.msg p+p{margin-top:6px}
+.msg .clear{clear:both}
+@keyframes pop{from{opacity:.0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.msg{animation:none}.chat{scroll-behavior:auto}.wave i{transition:none}}
+
+.photo{padding:4px}
+.photo img{display:block;width:230px;max-width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px}
+.photo .meta{position:absolute;right:10px;bottom:9px;top:auto;float:none;color:#fff;text-shadow:0 1px 2px #0008;margin:0}
+.photo .meta .tick{color:#fff}
+.photo .meta .tick.read{color:var(--yellow)}
+
+/* typing */
+.typing{display:flex;gap:4px;padding:12px 14px}
+.typing i{width:7px;height:7px;border-radius:50%;background:#b8a99c;animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+
+/* audio */
+.audio{display:flex;align-items:center;gap:10px;min-width:250px;padding:8px 10px 6px}
+.audio .play{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--red);color:#fff;display:grid;place-items:center}
+.audio .play[disabled]{opacity:.45;cursor:not-allowed}
+.wave{flex:1;display:flex;align-items:center;gap:2px;height:30px}
+.wave i{flex:1;background:#cdbfb3;border-radius:2px;transition:background .15s}
+.wave i.on{background:var(--red)}
+.audio .side{display:flex;flex-direction:column;align-items:center;gap:2px}
+.audio .side img{width:30px;height:30px;border-radius:50%;object-fit:cover}
+.audio .dur{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* verdict card */
+.card{padding:5px;width:270px}
+.card .stage{position:relative;border-radius:10px;overflow:hidden;background:var(--yellow)}
+.card .stage>img.dish{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.card .stamp{position:absolute;top:10px;right:10px;width:84px;height:84px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;text-align:center;border:3px solid #fff;transform:rotate(8deg);box-shadow:0 4px 10px #0005}
+.card .stamp b{font-family:var(--font-display);font-weight:400;font-size:30px;line-height:.9;display:block;font-variant-numeric:tabular-nums}
+.card .stamp small{font-size:10px;font-weight:800;letter-spacing:.5px;display:block}
+.card .sticker{position:absolute;left:-6px;bottom:-4px;width:120px;height:auto;filter:drop-shadow(0 3px 4px #0006)}
+.card .sticker.round{width:96px;height:96px;left:8px;bottom:8px;border-radius:50%;border:4px solid #fff;object-fit:cover}
+.card .balloon{position:absolute;right:8px;bottom:12px;max-width:150px;background:#fff;border:2.5px solid var(--ink);border-radius:18px;padding:6px 10px;font-family:var(--font-hand);font-size:17px;line-height:1.1;color:var(--ink)}
+.card .label{font-family:var(--font-display);font-weight:400;font-size:24px;line-height:1;color:var(--red);padding:10px 6px 2px;letter-spacing:.3px;text-wrap:balance}
+.card .label.pos{color:#1f7a3d}
+.card .sub{font-size:12.5px;color:var(--muted);padding:0 6px 2px}
+
+/* cta */
+.cta{padding:0;overflow:hidden;width:270px}
+.cta .bf{background:var(--ink);color:var(--yellow);padding:12px 12px 10px;display:flex;align-items:center;gap:10px}
+.cta .bf b{font-family:var(--font-display);font-weight:400;font-size:22px;line-height:.95;letter-spacing:.4px}
+.cta .bf span{font-size:12px;color:#fff;opacity:.85;display:block;font-family:var(--font-body);letter-spacing:0;margin-top:3px}
+.cta .bf .pct{margin-left:auto;font-family:var(--font-display);font-size:28px;color:var(--ink);background:var(--yellow);border-radius:10px;padding:6px 8px;transform:rotate(-5deg);line-height:1}
+.cta p{padding:10px 12px 4px}
+.cta a.buy{display:block;margin:6px 10px 6px;text-align:center;background:var(--red);color:#fff;text-decoration:none;font-weight:800;border-radius:10px;padding:11px 10px;font-size:15px}
+.cta .meta{margin-right:10px;margin-bottom:6px}
+
+/* quick replies */
+.quick{align-self:flex-start;display:flex;flex-wrap:wrap;gap:6px;max-width:92%;margin:2px 0 6px;animation:pop .22s ease-out both}
+.quick button{background:var(--paper);border:2px solid var(--red);color:var(--red);font-weight:700;font-size:14px;border-radius:999px;padding:8px 14px;line-height:1.2;text-align:left}
+.quick button.primary{background:var(--red);color:#fff}
+.quick button:disabled{opacity:.45;cursor:default}
+
+/* composer */
+.composer{flex:none;display:flex;align-items:flex-end;gap:8px;padding:8px 8px 10px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:var(--cream);border-top:1px solid #e3d5c2}
+.field{flex:1;min-width:0;display:flex;align-items:center;background:var(--paper);border-radius:24px;padding:4px 6px 4px 14px;min-height:46px;box-shadow:0 1px 0 #0000001a}
+.field input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:16px;color:var(--ink);padding:8px 0}
+.field input:focus{outline:none}
+.field:focus-within{box-shadow:0 0 0 2px var(--red)}
+.icon{width:38px;height:38px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;color:#6f5f57;flex:none}
+.icon:hover{background:#00000008}
+.send{width:46px;height:46px;border-radius:50%;border:0;background:var(--red);color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 2px 6px #7e142955}
+
+/* attachment sheet */
+.sheet-bg{position:absolute;inset:0;background:#0006;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);border-radius:22px 22px 0 0;padding:14px 16px 20px;transform:translateY(105%);transition:transform .25s ease;z-index:6;display:flex;flex-direction:column;gap:14px}
+.app.sheet-open .sheet{transform:none}
+.app.sheet-open .sheet-bg{opacity:1;pointer-events:auto}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:#ddd0c3;align-self:center}
+.sheet h2{margin:0;font-size:14px;font-weight:800;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
+.sources{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sources label,.sources button{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--cream);border:0;border-radius:14px;padding:14px 8px;font-weight:700;font-size:14px;cursor:pointer}
+.sources label span.ic,.sources button span.ic{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff}
+.samples{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.samples button{border:0;padding:0;background:none;display:flex;flex-direction:column;gap:4px;align-items:center;font-size:11.5px;font-weight:600;color:var(--muted)}
+.samples img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:2px solid transparent}
+.samples button:hover img{border-color:var(--red)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* story modal */
+.modal{position:absolute;inset:0;background:#120b0ae6;z-index:8;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px;color:#fff;text-align:center}
+.modal.open{display:flex}
+.modal img{max-height:calc(100% - 110px);max-width:100%;border-radius:14px;box-shadow:0 10px 30px #000a}
+.modal p{margin:0;font-size:13.5px;opacity:.9}
+.modal button{background:var(--yellow);color:var(--ink);border:0;border-radius:999px;padding:10px 22px;font-weight:800}
+
+/* mobile: chat fills the screen */
+@media (max-width:760px){
+  body{padding:0;display:block;background:var(--red)}
+  .panel{display:none}
+  .phone{width:100%;height:100%;border-radius:0;padding:0;box-shadow:none}
+  .app{border-radius:0}
+}
+@media (min-width:761px) and (max-height:700px){ .phone{height:calc(100dvh - 24px)} body{padding:12px} }
+</style>
+</head>
+<body>
+
+<aside class="panel" aria-label="Sobre o protótipo">
+  <img class="logo" src="assets/logo.webp" alt="Purina Friskies MasterCat – A melhor comida é a mais divertida" width="720" height="479">
+  <h1>Mande o prato. O Tompero julga.</h1>
+  <p>Protótipo do web app do MasterCat Friskies: a Márcia envia a foto do prato que montou pro gato e o Tompero, gato do Jacquin, devolve áudio, nota, card pro story e o link da Black Friday.</p>
+  <ol>
+    <li><b class="n">1</b><span>Aceite o regulamento no chat.</span></li>
+    <li><b class="n">2</b><span>Toque no clipe e envie uma foto, ou escolha um dos pratos de exemplo.</span></li>
+    <li><b class="n">3</b><span>Ouça o áudio, veja a nota e abra o card do story.</span></li>
+  </ol>
+  <span class="mode" id="mode"><i></i><span id="modeText">Conectando a IA…</span></span>
+  <small>Áudio com voz provisória do navegador (na campanha entra a locução do Tompero). Regulamento e link de compra são provisórios.</small>
+</aside>
+
+<main class="phone">
+  <div class="app" id="app">
+    <header class="top">
+      <button class="back" aria-label="Voltar (decorativo)" tabindex="-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <img src="assets/avatar.jpg" alt="Tompero" width="256" height="256">
+      <div class="who">
+        <b>Tompero
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-label="Jurado oficial"><path fill="#FFCB17" d="M7 20h10v-3.2c2.3-.6 4-2.7 4-5.2 0-2.7-2.1-4.9-4.7-5.1C15.6 4.2 13.9 3 12 3S8.4 4.2 7.7 6.5C5.1 6.7 3 8.9 3 11.6c0 2.5 1.7 4.6 4 5.2V20z"/></svg>
+        </b>
+        <span id="status">jurado oficial do MasterCat · online</span>
+      </div>
+      <span class="chip">MASTERCAT</span>
+    </header>
+
+    <section class="chat" id="chat" aria-live="polite" aria-label="Conversa com o Tompero">
+      <div class="day">HOJE</div>
+    </section>
+
+    <form class="composer" id="composer" autocomplete="off">
+      <div class="field">
+        <input id="text" type="text" placeholder="Mensagem" aria-label="Escreva uma mensagem para o Tompero" enterkeyhint="send">
+        <button type="button" class="icon" id="clip" aria-label="Anexar foto do prato">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-8.5 8.5a5.5 5.5 0 01-7.8-7.8l8.5-8.5a3.7 3.7 0 015.2 5.2l-8.5 8.5a1.8 1.8 0 01-2.6-2.6l7.8-7.8"/></svg>
+        </button>
+        <label class="icon" for="cam" aria-label="Tirar foto do prato" style="cursor:pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg>
+        </label>
+      </div>
+      <button class="send" id="sendBtn" type="submit" aria-label="Enviar mensagem">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4L21 12 3.4 3.6 3.3 10.2 15.5 12 3.3 13.8z"/></svg>
+      </button>
+    </form>
+
+    <div class="sheet-bg" id="sheetBg"></div>
+    <div class="sheet" id="sheet" role="dialog" aria-label="Enviar foto do prato">
+      <span class="grab"></span>
+      <div class="sources">
+        <label for="gal"><span class="ic" style="background:#7B3FA0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg></span>Galeria</label>
+        <label for="cam"><span class="ic" style="background:var(--red)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg></span>Câmera</label>
+      </div>
+      <h2>Sem gato por perto? Teste com um prato</h2>
+      <div class="samples" id="samples"></div>
+    </div>
+    <input class="vh" type="file" id="gal" accept="image/*">
+    <input class="vh" type="file" id="cam" accept="image/*" capture="environment">
+
+    <div class="modal" id="modal" role="dialog" aria-label="Card para o story">
+      <img id="storyImg" alt="Card do veredito do Tompero para postar no story">
+      <p>No celular, toque e segure a imagem para salvar e postar marcando @FriskiesBR.</p>
+      <button type="button" id="closeModal">Voltar pro chat</button>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const chat = $("#chat"), statusEl = $("#status"), app = $("#app");
+const BUY_URL = "https://www.amazon.com.br/s?k=friskies";
+
+/* ---------------- content ---------------- */
+const LINES = {
+  positiva: [
+    "UH LA LA! O seu prrato ficou excelente. Já pode ser chamada de Mastercat!",
+    "Que marravilha! Que harmonia de texturras! De saborres! Somente um Mastercat poderria preparar um prrato assim.",
+    "Mon Dieu! Que prrato excelente! Uma composiçon magnifique. Você é um verdadeirro Mastercat."
+  ],
+  neutra: [
+    "Nem tão bon… nem tão mal. Mas acho que o seu gato merrecia mais, hein? Está faltando algo, um tompero especial.",
+    "Este, com certeza, é um dos prratos de comida feitos para um gato. Mas eu esperrava mais.",
+    "Ummm, non sei. Me parrece um prrato assintomático parra diverson. Nem tem, nem non tem."
+  ],
+  negativa: [
+    "Até parrece que desliga o freezer de noite! Que terrible, Márcia! Querremos diverson, querremos Friskies!",
+    "Non non non, Márcia! Você é a vergonha da prrofisson! Onde está o saborr? Onde está a texturra?",
+    "Non pode seeer! Acho que prrecisa fazer de novo, hein? Dessa vez com amorr, carrinho e quem sabe um sachê de Friskies."
+  ]
+};
+const GENERIC = {
+  positiva: "Vejo forrmas, corres e muita diverson nesse prrato. Seu gato vai se sentirr num restaurrante estrrelado.",
+  neutra: "Tem boa intençon, mas falta ousadia. Brrinque com as texturras: um patê aqui, um molho ali, um desenho no meio.",
+  negativa: "Isso é um punhado de bolotas e nada mais. Todo dia bolota, ninguém aguenta! Capriche no empratamento."
+};
+const SAMPLES = [
+  { id:"passaro", src:"assets/prato_passaro.jpg", label:"Passarinho",
+    r:{ e_prato:true, nota:9.6, categoria:"positiva", audio:LINES.positiva[2],
+        texto:"Um passarrinho de patê pousado num purê, com pegadinhas de gato no prrato! Isso é alta gastronomia felina, Márcia.",
+        balao:"Magnifique!" } },
+  { id:"ratinho", src:"assets/prato_ratinho.jpg", label:"Ratinho",
+    r:{ e_prato:true, nota:9.1, categoria:"positiva", audio:LINES.positiva[0],
+        texto:"Um rratinho de bolotas com orrelhas de petisco e bigodes! O caçadorr que existe no seu gato vai ficar orgulhoso.",
+        balao:"Que rratinho!" } },
+  { id:"morcego", src:"assets/prato_morcego.jpg", label:"Morcego",
+    r:{ e_prato:true, nota:8.3, categoria:"positiva", audio:LINES.positiva[1],
+        texto:"Um morrcego de bolotas com dentinhos! Clima de Halloween na tigela, muito diverson. Só faltou uma texturra cremosa pra contrastar.",
+        balao:"Assustadorr de bom!" } },
+  { id:"bolota", src:"assets/prato_bolota.jpg", label:"Só bolota",
+    r:{ e_prato:true, nota:2.4, categoria:"negativa", audio:LINES.negativa[0],
+        texto:"Uma tigela azul com bolotas jogadas e mais nada. Cadê o empratamento? Cadê o carinho? Seu gato merrece mais.",
+        balao:"Cadê a diverson?" } }
+];
+
+const VERDICT = {
+  positiva: { label:"VOCÊ É UM MASTERCAT!", cls:"pos", sticker:"assets/yum.jpg", round:true },
+  neutra:   { label:"QUASE LÁ, MÁRCIA", cls:"", sticker:"assets/sleepy.webp", round:false },
+  negativa: { label:"VERGONHA DA PROFISSON", cls:"", sticker:"assets/grumpy.webp", round:false }
+};
+
+/* ---------------- state ---------------- */
+let sample = null, aiImages = false, aiReady = false, backend = null; // backend: "claude" | "worker" | null
+const aiOn = () => backend === "worker" || (backend === "claude" && aiReady && aiImages);
+let accepted = false, busy = false, lastSide = null, turns = [];
+let lastResult = null;
+
+/* ---------------- helpers ---------------- */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const now = () => new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const TICK = '<svg viewBox="0 0 18 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6l3 3 6-7.5"/><path d="M7.5 9l1 0 6-7.5"/></svg>';
+function meta(out){ return `<span class="meta">${now()}${out ? `<span class="tick">${TICK}</span>` : ""}</span>`; }
+function scrollDown(){ requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; }); }
+function setStatus(t){ statusEl.textContent = t || "jurado oficial do MasterCat · online"; statusEl.classList.toggle("busy", !!t); }
+
+function bubble(side, html, extra=""){
+  const el = document.createElement("div");
+  const first = lastSide !== side;
+  el.className = `msg ${side} ${first ? "first gap" : ""} ${extra}`;
+  el.innerHTML = html;
+  chat.appendChild(el); lastSide = side; scrollDown();
+  return el;
+}
+function textIn(t){ return bubble("in", `<p>${esc(t)}</p>${meta(false)}<span class="clear"></span>`); }
+function textOut(t){ const el = bubble("out", `<p>${esc(t)}</p>${meta(true)}<span class="clear"></span>`); markRead(el); return el; }
+function markRead(el, ms=700){ setTimeout(() => el.querySelectorAll(".tick").forEach(t => t.classList.add("read")), ms); }
+
+function typing(){
+  const el = bubble("in", '<div class="typing" aria-label="Tompero está digitando"><i></i><i></i><i></i></div>');
+  el.style.padding = "0";
+  return { done(){ el.remove(); lastSide = chat.lastElementChild?.classList.contains("in") ? "in" : (chat.lastElementChild?.classList.contains("out") ? "out" : null); } };
+}
+async function say(t, ms){
+  const tp = typing(); setStatus("digitando…");
+  await sleep(ms ?? Math.min(1600, 500 + t.length*14));
+  tp.done(); setStatus(); return textIn(t);
+}
+function quick(options){
+  const wrap = document.createElement("div"); wrap.className = "quick";
+  options.forEach(o => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = o.label;
+    if (o.primary) b.className = "primary";
+    b.onclick = () => { wrap.querySelectorAll("button").forEach(x => x.disabled = true); o.run(); };
+    wrap.appendChild(b);
+  });
+  chat.appendChild(wrap); lastSide = null; scrollDown(); return wrap;
+}
+
+/* ---------------- audio bubble ---------------- */
+const canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance === "function";
+function audioBubble(text){
+  const bars = Array.from({length:34}, (_,i) => 6 + Math.round(Math.abs(Math.sin(i*1.7)+Math.sin(i*.6))*9 + Math.random()*5));
+  const secs = Math.max(4, Math.round(text.split(/\s+/).length / 2.6));
+  const el = bubble("in", `
+    <div class="audio">
+      <button class="play" type="button" aria-label="Ouvir áudio do Tompero" ${canSpeak ? "" : "disabled title='Seu navegador não toca a voz provisória'"}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>
+      </button>
+      <div class="wave" aria-hidden="true">${bars.map(h => `<i style="height:${h}px"></i>`).join("")}</div>
+      <div class="side"><img src="assets/avatar.jpg" alt=""><span class="dur">0:${String(secs).padStart(2,"0")}</span></div>
+    </div>${meta(false)}<span class="clear"></span>`);
+  el.style.padding = "0 0 6px";
+  const btn = el.querySelector(".play"), waves = [...el.querySelectorAll(".wave i")];
+  let timer = null;
+  const PLAY = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>';
+  const STOP = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  const reset = () => { clearInterval(timer); timer = null; btn.innerHTML = PLAY; waves.forEach(w => w.classList.remove("on")); };
+  btn.onclick = () => {
+    if (!canSpeak) return;
+    try {
+      if (timer) { speechSynthesis.cancel(); reset(); return; }
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}]/gu,""));
+      const voices = speechSynthesis.getVoices();
+      const v = voices.find(v => /fr[-_]FR/i.test(v.lang)) || voices.find(v => /^fr/i.test(v.lang));
+      if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "fr-FR"; }
+      u.rate = 1.02; u.pitch = 1.25;
+      const start = Date.now(), total = secs*1000;
+      btn.innerHTML = STOP;
+      timer = setInterval(() => {
+        const k = Math.min(1, (Date.now()-start)/total);
+        waves.forEach((w,i) => w.classList.toggle("on", i/waves.length <= k));
+      }, 120);
+      u.onend = reset; u.onerror = reset;
+      speechSynthesis.speak(u);
+    } catch { reset(); }
+  };
+  return el;
+}
+
+/* ---------------- verdict + cta ---------------- */
+function verdictCard(r, imgUrl){
+  const v = VERDICT[r.categoria] || VERDICT.neutra;
+  const nota = Number(r.nota).toLocaleString("pt-BR",{minimumFractionDigits:1, maximumFractionDigits:1});
+  const el = bubble("in", `
+    <div class="stage">
+      <img class="dish" src="${imgUrl}" alt="Prato enviado">
+      <div class="stamp"><div><small>NOTA</small><b>${nota}</b><small>DE 10</small></div></div>
+      <img class="sticker ${v.round ? "round" : ""}" src="${v.sticker}" alt="Reação do Tompero">
+      ${r.balao ? `<div class="balloon">${esc(r.balao)}</div>` : ""}
+    </div>
+    <div class="label ${v.cls}">${v.label}</div>
+    <div class="sub">Veredito do Tompero · MasterCat Friskies</div>
+    ${meta(false)}<span class="clear"></span>`, "card");
+  return el;
+}
+function ctaBubble(cat){
+  const lead = cat === "positiva"
+    ? "Pra seguir empratando como um Mastercat, garanta texturras e saborres pro ano todo."
+    : "Pra virar o jogo no prróximo prrato: patê, molho e sachês Friskies com preço de Black Friday.";
+  bubble("in", `
+    <div class="bf"><div><b>BLACK FRIDAY FRISKIES</b><span>Texturas e sabores pro ano inteiro</span></div><span class="pct">%</span></div>
+    <p>${esc(lead)}</p>
+    <a class="buy" href="${BUY_URL}" target="_blank" rel="noopener">Comprar Friskies na Black Friday</a>
+    ${meta(false)}<span class="clear"></span>`, "cta");
+}
+
+/* ---------------- AI ---------------- */
+const RULES = `Você é o TOMPERO, o gato do chef Érick Jacquin, jurado exigente e divertido do "MasterCat Friskies" (parceria de Purina Friskies com o MasterChef Brasil, campanha de Black Friday).
+As pessoas (que você chama carinhosamente de "Márcia") mandam a foto do prato/tigela que montaram para o gato delas. Você avalia CRIATIVIDADE e DIVERSÃO do empratamento: desenho, formas, personagens, uso de texturas diferentes (bolota seca, patê, molho, sachê), cores, capricho na louça.
+
+Voz: português do Brasil com sotaque francês escrito de forma fonética, como o Jacquin: "prrato", "texturra", "diverson", "prrofisson", "non", "magnifique", "mon Dieu", "uh la la", "merrece". Engraçado, dramático, nunca ofensivo. Bordões possíveis: "querremos diverson, querremos Friskies!", "a vergonha da prrofisson".
+Exemplos de tom: "UH LA LA! O seu prrato ficou excelente. Já pode ser chamada de Mastercat!" / "Nem tão bon… nem tão mal. Mas acho que o seu gato merrecia mais, hein?" / "Non non non, Márcia! Você é a vergonha da prrofisson! Onde está o saborr?"
+
+Regras:
+- Comente detalhes que REALMENTE aparecem na foto.
+- Escala: nota >= 8 = "positiva"; 5 a 7,9 = "neutra"; < 5 = "negativa". Bolotas jogadas sem nenhum capricho = negativa.
+- Se a foto não for de comida de gato/prato para gato, e_prato = false: responda brincando e peça a foto do prato (nota 0, categoria "neutra").
+- Se aparecer algo perigoso para gatos (cebola, alho, chocolate, uva, osso cozido, álcool), avise com carinho e dê no máximo "neutra".
+- Não cite outras marcas, não faça promessas de saúde ou nutrição, não fale de preços.
+Responda SOMENTE com JSON neste formato:
+{"e_prato": true, "nota": 8.5, "categoria": "positiva", "audio": "frase curta para o áudio, até 22 palavras", "texto": "comentário de 1 a 2 frases sobre detalhes da foto, até 40 palavras", "balao": "2 a 4 palavras para o balão do card"}`;
+
+async function toDataURL(blob){ return new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(blob); }); }
+async function evaluateWorker(blob){
+  const res = await fetch("/api/avaliar", { method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify({ image: await toDataURL(blob) }) });
+  if (!res.ok) throw { code: "worker_" + res.status };
+  return normalize(await res.json());
+}
+function normalize(r){
+  if (!r || typeof r !== "object") throw { code: "invalid_json" };
+  const nota = Math.max(0, Math.min(10, Number(r.nota) || 0));
+  const cat = ["positiva","neutra","negativa"].includes(r.categoria) ? r.categoria : (nota >= 8 ? "positiva" : nota >= 5 ? "neutra" : "negativa");
+  return { e_prato: r.e_prato !== false, nota, categoria: cat,
+    audio: String(r.audio || pick(LINES[cat])).slice(0, 220),
+    texto: String(r.texto || GENERIC[cat]).slice(0, 320),
+    balao: String(r.balao || "").slice(0, 40) };
+}
+async function evaluateAI(blob){
+  if (backend === "worker") return evaluateWorker(blob);
+  const r = await sample.json(RULES + "\n\nA imagem anexada é a foto enviada agora. Avalie.", { images: blob, modelTier: "quick", cache: false });
+  return normalize(r);
+}
+
+/* offline demo: colorfulness + detail of the photo */
+async function evaluateDemo(img){
+  const c = document.createElement("canvas"); c.width = c.height = 96;
+  const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(img, 0, 0, 96, 96);
+  const d = x.getImageData(0, 0, 96, 96).data;
+  let rg=[], yb=[], edges=0, prev=null;
+  for (let i=0;i<d.length;i+=4){
+    const R=d[i],G=d[i+1],B=d[i+2]; rg.push(R-G); yb.push(.5*(R+G)-B);
+    const L=(R+G+B)/3; if(prev!==null && Math.abs(L-prev)>28) edges++; prev=L;
+  }
+  const m = a => a.reduce((s,v)=>s+v,0)/a.length, sd = (a,mu) => Math.sqrt(a.reduce((s,v)=>s+(v-mu)**2,0)/a.length);
+  const mrg=m(rg), myb=m(yb);
+  const colorful = Math.sqrt(sd(rg,mrg)**2+sd(yb,myb)**2) + .3*Math.sqrt(mrg**2+myb**2);
+  const detail = edges/(96*96);
+  let nota = Math.max(1.5, Math.min(9.7, 1.2 + colorful/9 + detail*14));
+  nota = Math.round(nota*10)/10;
+  const cat = nota >= 8 ? "positiva" : nota >= 5 ? "neutra" : "negativa";
+  return { e_prato:true, nota, categoria:cat, audio: pick(LINES[cat]), texto: GENERIC[cat], balao: cat==="positiva" ? "Magnifique!" : cat==="neutra" ? "Falta tompero!" : "Non non non!" };
+}
+
+function loadImg(src){ return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; }); }
+async function toJpeg(img){
+  const max = 1280, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth*k); c.height = Math.round(img.naturalHeight*k);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return new Promise(r => c.toBlob(r, "image/jpeg", .86));
+}
+
+/* ---------------- flow ---------------- */
+async function handlePhoto(src, preset){
+  closeSheet();
+  if (busy) return;
+  if (!accepted){
+    await say("Antes de me mandar o prrato, prrecisa aceitar o regulamento, Márcia. Regrras son regrras!");
+    askConsent(); return;
+  }
+  busy = true;
+  const out = bubble("out", `<img src="${src}" alt="Foto do prato enviado">${meta(true)}`, "photo");
+  markRead(out, 600);
+  await sleep(700);
+  setStatus("avaliando o seu prato…");
+  const tp = typing();
+  let r = null;
+  try {
+    const img = await loadImg(src);
+    if (preset && !aiOn()) { await sleep(1600); r = preset; }
+    else if (aiOn()) {
+      try { r = await evaluateAI(await toJpeg(img)); }
+      catch (e) {
+        if (e && (e.code === "not_granted" || e.code === "sampling_disabled" || e.code === "images_unavailable" || e.code === "capability_disabled")) { aiReady = false; setMode(); }
+        if (e && e.code === "worker_429") { backend = null; setMode(); }
+        r = preset || await evaluateDemo(img);
+      }
+    } else { await sleep(1500); r = await evaluateDemo(img); }
+  } catch { r = await evaluateDemo(await loadImg(src)).catch(() => null) || SAMPLES[3].r; }
+  tp.done();
+
+  if (!r.e_prato){
+    setStatus();
+    await say(r.audio || "Non non, Márcia. Isso non é prrato de gato! Me manda a foto da tigela que você montou.");
+    quick([{ label:"Mandar outro prato", primary:true, run: openSheet }]);
+    busy = false; return;
+  }
+  lastResult = { r, src };
+  setStatus("gravando áudio…"); await sleep(1300); setStatus();
+  audioBubble(r.audio);
+  await sleep(500);
+  await say(r.texto, 900);
+  await sleep(250);
+  verdictCard(r, src);
+  await sleep(700);
+  ctaBubble(r.categoria);
+  await sleep(300);
+  quick([
+    { label:"Mandar outro prato", primary:true, run: openSheet },
+    { label:"Ver card pro story", run: openStory }
+  ]);
+  turns.push({ role:"assistant", content:`(Avaliei um prato: nota ${r.nota}, ${r.categoria}. Disse: ${r.texto})` });
+  busy = false;
+}
+
+async function handleText(t){
+  textOut(t);
+  turns.push({ role:"user", content:t });
+  if (busy) return;
+  busy = true;
+  let reply = null;
+  if (backend === "worker"){
+    const tp = typing(); setStatus("digitando…");
+    try {
+      const res = await fetch("/api/conversa", { method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify({ turns: turns.slice(-8) }) });
+      if (res.ok) { const j = await res.json(); reply = String(j.texto || "").trim() || null; }
+    } catch {}
+    tp.done(); setStatus();
+  } else if (aiReady){
+    const tp = typing(); setStatus("digitando…");
+    try {
+      const { text } = await sample([
+        { role:"user", content: RULES.split("Regras:")[0] + "\nAgora você está conversando por chat. Responda em no máximo 30 palavras, sem JSON, e sempre puxe a pessoa a mandar a foto do prato do gato (botão do clipe). Se pedirem algo fora do tema, recuse com humor." },
+        ...turns.slice(-8)
+      ], { modelTier:"quick", cache:false });
+      reply = text.trim();
+    } catch (e) {
+      if (e && (e.code === "not_granted" || e.code === "sampling_disabled")) { aiReady = false; setMode(); }
+    }
+    tp.done(); setStatus();
+  }
+  if (!reply){
+    reply = pick([
+      "Non non, Márcia. Eu sou jurrado, non sou de conversinha. Me manda a foto do prrato no clipe aí embaixo!",
+      "Muito bonito o que você escreveu, mas eu só julgo prratos. Querremos diverson, querremos foto!",
+      "Uh la la, quanta palavra! Toque no clipe e me mostre o empratamento do seu gato."
+    ]);
+    await say(reply);
+  } else { textIn(reply); }
+  turns.push({ role:"assistant", content:reply });
+  if (!accepted) askConsent();
+  busy = false;
+}
+
+function askConsent(){
+  quick([
+    { label:"Aceito o regulamento e autorizo o uso da foto", primary:true, run: async () => {
+        accepted = true; textOut("Aceito o regulamento e autorizo o uso da foto 🐾");
+        await say("Magnifique! Agorra toque no clipe 📎 e me mande a foto do prrato. Estou com fome de diverson.");
+        quick([{ label:"Enviar foto do prato", primary:true, run: openSheet }]);
+      } },
+    { label:"Ler regulamento", run: async () => {
+        textOut("Quero ler o regulamento");
+        await say("Prévia: participação gratuita para maiores de 18 anos. A foto pode ser republicada nos perfis de @FriskiesBR e do Jacquin, só com a sua autorização. Texto final fica com o jurídico.", 1200);
+        askConsent();
+      } }
+  ]);
+}
+
+async function intro(){
+  await sleep(500);
+  await say("Bonjour, Márcia! Aqui é o Tompero, gato do Jacquin e o jurrado mais difícil de agradar do MasterCat Friskies.", 1100);
+  await say("Prepare um prrato divertido pro seu gato, tire uma foto e me mande. Eu decido se você é um verdadeirro Mastercat… ou a vergonha da prrofisson.", 1300);
+  askConsent();
+}
+
+/* ---------------- story card ---------------- */
+async function openStory(){
+  if (!lastResult) return;
+  const { r, src } = lastResult, v = VERDICT[r.categoria] || VERDICT.neutra;
+  await document.fonts.ready;
+  const W=1080, H=1920, c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+  x.fillStyle="#FFCB17"; x.fillRect(0,0,W,H);
+  const g=x.createRadialGradient(240,300,50,240,300,900); g.addColorStop(0,"#FFDA4D"); g.addColorStop(1,"#FFCB1700"); x.fillStyle=g; x.fillRect(0,0,W,H);
+  const [logo, dish, st] = await Promise.all([loadImg("assets/logo.webp"), loadImg(src), loadImg(v.sticker)]);
+  const lw=720, lh=lw*logo.height/logo.width; x.drawImage(logo,(W-lw)/2,90,lw,lh);
+  // dish polaroid
+  x.save(); x.translate(W/2, 1000); x.rotate(-.035);
+  x.fillStyle="#fff"; x.shadowColor="#0005"; x.shadowBlur=40; x.shadowOffsetY=16; x.fillRect(-400,-420,800,900); x.shadowColor="transparent";
+  const s=Math.min(dish.width,dish.height); x.drawImage(dish,(dish.width-s)/2,(dish.height-s)/2,s,s,-370,-390,740,740);
+  x.fillStyle="#A8213A"; x.font='400 64px "Lilita One"'; x.textAlign="center"; x.textBaseline="middle";
+  x.fillText(v.label, 0, 415, 740); x.restore();
+  // stamp
+  x.save(); x.translate(860, 610); x.rotate(.14);
+  x.beginPath(); x.arc(0,0,150,0,Math.PI*2); x.fillStyle="#A8213A"; x.fill(); x.lineWidth=10; x.strokeStyle="#fff"; x.stroke();
+  x.fillStyle="#fff"; x.textAlign="center"; x.textBaseline="middle"; x.font='800 30px Figtree'; x.fillText("NOTA",0,-74);
+  x.font='400 110px "Lilita One"'; x.fillText(Number(r.nota).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}),0,8);
+  x.font='800 30px Figtree'; x.fillText("DE 10",0,86); x.restore();
+  // sticker
+  if (v.round){ x.save(); x.beginPath(); x.arc(230,1610,165,0,Math.PI*2); x.closePath(); x.fillStyle="#fff"; x.fill(); x.beginPath(); x.arc(230,1610,150,0,Math.PI*2); x.clip(); x.drawImage(st,80,1460,300,300); x.restore(); }
+  else { const sw=360, sh=sw*st.height/st.width; x.drawImage(st,30,1765-sh,sw,sh); }
+  // balloon
+  if (r.balao){
+    x.font='400 64px "Gochi Hand"'; const tw=Math.min(560, x.measureText(r.balao).width)+70;
+    const bx=1020-tw, by=1560; x.fillStyle="#fff"; x.strokeStyle="#231816"; x.lineWidth=7;
+    x.beginPath(); x.roundRect(bx,by,tw,120,60); x.fill(); x.stroke();
+    x.fillStyle="#231816"; x.textAlign="center"; x.textBaseline="middle"; x.fillText(r.balao, bx+tw/2, by+62, 560);
+  }
+  x.fillStyle="#231816"; x.textAlign="center"; x.font='800 40px Figtree'; x.fillText("@FriskiesBR  ·  #MasterCatFriskies", W/2, 1810);
+  x.font='600 30px Figtree'; x.fillStyle="#7E1429"; x.fillText("Avaliado pelo Tompero, o gato do Jacquin", W/2, 1862);
+  $("#storyImg").src = c.toDataURL("image/jpeg", .9);
+  $("#modal").classList.add("open"); $("#closeModal").focus();
+}
+$("#closeModal").onclick = () => $("#modal").classList.remove("open");
+
+/* ---------------- sheet + inputs ---------------- */
+function openSheet(){ app.classList.add("sheet-open"); }
+function closeSheet(){ app.classList.remove("sheet-open"); }
+$("#clip").onclick = openSheet;
+$("#sheetBg").onclick = closeSheet;
+document.addEventListener("keydown", e => { if (e.key === "Escape"){ closeSheet(); $("#modal").classList.remove("open"); } });
+const sWrap = $("#samples");
+SAMPLES.forEach(sm => {
+  const b = document.createElement("button"); b.type = "button";
+  b.innerHTML = `<img src="${sm.src}" alt="">${sm.label}`;
+  b.setAttribute("aria-label", "Enviar prato de exemplo: " + sm.label);
+  b.onclick = () => handlePhoto(sm.src, sm.r);
+  sWrap.appendChild(b);
+});
+["#gal","#cam"].forEach(id => $(id).addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  if (!/^image\//.test(f.type)) { closeSheet(); say("Non non, Márcia, isso non é foto!"); return; }
+  handlePhoto(URL.createObjectURL(f), null);
+}));
+$("#composer").addEventListener("submit", e => {
+  e.preventDefault();
+  const t = $("#text").value.trim();
+  if (!t) { openSheet(); return; }
+  $("#text").value = ""; handleText(t);
+});
+
+/* ---------------- mode ---------------- */
+function setMode(){
+  const m = $("#mode"), t = $("#modeText");
+  m.classList.remove("on","demo");
+  if (aiOn()){ m.classList.add("on"); t.textContent = backend === "worker" ? "Avaliação por IA ativa (Cloudflare)" : "Avaliação por IA ativa"; }
+  else { m.classList.add("demo"); t.textContent = "Modo demonstração (sem IA)"; }
+}
+(async () => {
+  try {
+    if (window.claude && typeof window.claude.use === "function"){
+      sample = await window.claude.use("sample");
+      if (sample){
+        aiReady = true; backend = "claude";
+        const lim = await sample.limits().catch(() => null);
+        aiImages = !!(lim && lim.images);
+      }
+    }
+  } catch { sample = null; aiReady = false; }
+  if (!backend){
+    try {
+      const res = await fetch("/api/status", { cache: "no-store" });
+      if (res.ok && (await res.json()).ai) backend = "worker";
+    } catch {}
+  }
+  setMode();
+})();
+setTimeout(() => { if (!$("#mode").classList.contains("on") && !$("#mode").classList.contains("demo")) setMode(); }, 11000);
+if (canSpeak) { try { speechSynthesis.getVoices(); } catch {} }
+
+intro();
+})();
+</script>
+</body>
+</html>
