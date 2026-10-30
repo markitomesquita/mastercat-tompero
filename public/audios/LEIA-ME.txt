@@ -1,0 +1,26 @@
+ÁUDIOS DO TOMPERO — coloque aqui os 9 arquivos, com estes nomes exatos:
+
+  ruim-1.mp3   ruim-2.mp3   ruim-3.mp3     → nota abaixo de 5
+  medio-1.mp3  medio-2.mp3  medio-3.mp3    → nota de 5 a 7,9
+  bom-1.mp3    bom-2.mp3    bom-3.mp3      → nota 8 ou mais
+
+O bot escolhe o nível pela nota e sorteia um dos 3 áudios (sem repetir o anterior).
+Enquanto um arquivo não existir, toca a voz provisória do navegador lendo a fala abaixo.
+
+Formato recomendado: MP3, mono, 44,1 kHz, 96 kbps, até ~12 segundos,
+volume normalizado (cerca de -16 LUFS), sem silêncio no início.
+
+Falas de referência (as do deck; se gravar textos diferentes, me avise para atualizar):
+  bom-1   UH LA LA! O seu prato ficou excelente. Já pode ser chamada de Mastercat!
+  bom-2   Que marravilha! Que harmonia de texturas! De sabores! Somente um Mastercat poderia preparar um prato assim.
+  bom-3   Mon Dieu! Que prato excelente! Uma composição magnifique. Você é um verdadeiro Mastercat.
+  medio-1 Nem tão bon… nem tão mal. Mas acho que o seu gato merecia mais, hein? Está faltando algo, um tompero especial.
+  medio-2 Este, com certeza, é um dos pratos de comida feitos para um gato. Mas eu esperava mais.
+  medio-3 Ummm, non sei. Me parece um prato assintomático para diverson. Nem tem, nem non tem.
+  ruim-1  Até parece que desliga o freezer de noite! Que terrible, Márcia! Queremos diverson, queremos Friskies!
+  ruim-2  Non non non, Márcia! Você é a vergonha da profisson! Onde está o sabor? Onde está a textura?
+  ruim-3  Non pode seeer! Acho que precisa fazer de novo, hein? Dessa vez com amor, carinho e quem sabe um sachê de Friskies.
+
+Como enviar sem Terminal: no GitHub, abra a pasta public/audios do repositório
+mastercat-tompero → Add file → Upload files → arraste os .mp3 → Commit changes.
+A Cloudflare publica sozinha em 1 a 2 minutos.

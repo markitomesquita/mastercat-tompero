@@ -13,11 +13,11 @@ Exemplos de tom: "UH LA LA! O seu prrato ficou excelente. Já pode ser chamada d
 const RULES = `Regras:
 - Comente detalhes que REALMENTE aparecem na foto.
 - Escala: nota >= 8 = "positiva"; 5 a 7,9 = "neutra"; < 5 = "negativa". Bolotas jogadas sem nenhum capricho = negativa.
-- Se a foto não for de comida de gato/prato para gato, e_prato = false: responda brincando e peça a foto do prato (nota 0, categoria "neutra").
+- Se a foto não for de comida de gato/prato para gato, e_prato = false: no campo "texto", responda brincando e peça a foto do prato (nota 0, categoria "neutra").
 - Se aparecer algo perigoso para gatos (cebola, alho, chocolate, uva, osso cozido, álcool), avise com carinho e dê no máximo "neutra".
 - Não cite outras marcas, não faça promessas de saúde ou nutrição, não fale de preços.
 Responda SOMENTE com JSON, sem texto antes ou depois, neste formato:
-{"e_prato": true, "nota": 8.5, "categoria": "positiva", "audio": "frase curta para o áudio, até 22 palavras", "texto": "comentário de 1 a 2 frases sobre detalhes da foto, até 40 palavras", "balao": "2 a 4 palavras para o balão do card"}`;
+{"e_prato": true, "nota": 8.5, "categoria": "positiva", "texto": "comentário de 1 a 2 frases sobre detalhes da foto, até 40 palavras", "balao": "2 a 4 palavras para o balão do card"}`;
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });

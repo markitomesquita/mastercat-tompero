@@ -201,7 +201,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
     <li><b class="n">3</b><span>Ouça o áudio, veja a nota e abra o card do story.</span></li>
   </ol>
   <span class="mode" id="mode"><i></i><span id="modeText">Conectando a IA…</span></span>
-  <small>Áudio com voz provisória do navegador (na campanha entra a locução do Tompero). Regulamento e link de compra são provisórios.</small>
+  <small>Áudios do Tompero: 9 gravações (3 por nível de nota); enquanto não forem enviadas, toca a voz provisória do navegador. Regulamento e link de compra são provisórios.</small>
 </aside>
 
 <main class="phone">
@@ -290,20 +290,16 @@ const GENERIC = {
 };
 const SAMPLES = [
   { id:"passaro", src:"assets/prato_passaro.jpg", label:"Passarinho",
-    r:{ e_prato:true, nota:9.6, categoria:"positiva", audio:LINES.positiva[2],
-        texto:"Um passarrinho de patê pousado num purê, com pegadinhas de gato no prrato! Isso é alta gastronomia felina, Márcia.",
+    r:{ e_prato:true, nota:9.6, categoria:"positiva", texto:"Um passarrinho de patê pousado num purê, com pegadinhas de gato no prrato! Isso é alta gastronomia felina, Márcia.",
         balao:"Magnifique!" } },
   { id:"ratinho", src:"assets/prato_ratinho.jpg", label:"Ratinho",
-    r:{ e_prato:true, nota:9.1, categoria:"positiva", audio:LINES.positiva[0],
-        texto:"Um rratinho de bolotas com orrelhas de petisco e bigodes! O caçadorr que existe no seu gato vai ficar orgulhoso.",
+    r:{ e_prato:true, nota:9.1, categoria:"positiva", texto:"Um rratinho de bolotas com orrelhas de petisco e bigodes! O caçadorr que existe no seu gato vai ficar orgulhoso.",
         balao:"Que rratinho!" } },
   { id:"morcego", src:"assets/prato_morcego.jpg", label:"Morcego",
-    r:{ e_prato:true, nota:8.3, categoria:"positiva", audio:LINES.positiva[1],
-        texto:"Um morrcego de bolotas com dentinhos! Clima de Halloween na tigela, muito diverson. Só faltou uma texturra cremosa pra contrastar.",
+    r:{ e_prato:true, nota:8.3, categoria:"positiva", texto:"Um morrcego de bolotas com dentinhos! Clima de Halloween na tigela, muito diverson. Só faltou uma texturra cremosa pra contrastar.",
         balao:"Assustadorr de bom!" } },
   { id:"bolota", src:"assets/prato_bolota.jpg", label:"Só bolota",
-    r:{ e_prato:true, nota:2.4, categoria:"negativa", audio:LINES.negativa[0],
-        texto:"Uma tigela azul com bolotas jogadas e mais nada. Cadê o empratamento? Cadê o carinho? Seu gato merrece mais.",
+    r:{ e_prato:true, nota:2.4, categoria:"negativa", texto:"Uma tigela azul com bolotas jogadas e mais nada. Cadê o empratamento? Cadê o carinho? Seu gato merrece mais.",
         balao:"Cadê a diverson?" } }
 ];
 
@@ -363,43 +359,77 @@ function quick(options){
 }
 
 /* ---------------- audio bubble ---------------- */
+/* 9 áudios pré-gravados em public/audios/: ruim-1..3, medio-1..3, bom-1..3 (.mp3).
+   O nível vem da nota; dentro do nível, sorteia sem repetir o último.
+   Se o arquivo ainda não existir, a voz provisória do navegador lê a fala equivalente de LINES. */
+const AUDIO_FILE = { negativa:"ruim", neutra:"medio", positiva:"bom" };
+const lastAudio = {};
+let playing = null; // áudio tocando agora (só um por vez)
+function pickAudio(cat){
+  let i; do { i = Math.floor(Math.random()*3); } while (lastAudio[cat] === i && Math.random() < .95);
+  lastAudio[cat] = i;
+  return { src:`audios/${AUDIO_FILE[cat] || "medio"}-${i+1}.mp3`, text:(LINES[cat] || LINES.neutra)[i] };
+}
 const canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance === "function";
-function audioBubble(text){
+const fmt = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,"0")}`;
+function audioBubble(cat){
+  const { src, text } = pickAudio(cat);
   const bars = Array.from({length:34}, (_,i) => 6 + Math.round(Math.abs(Math.sin(i*1.7)+Math.sin(i*.6))*9 + Math.random()*5));
-  const secs = Math.max(4, Math.round(text.split(/\s+/).length / 2.6));
+  let secs = Math.max(4, Math.round(text.split(/\s+/).length / 2.6));
   const el = bubble("in", `
     <div class="audio">
-      <button class="play" type="button" aria-label="Ouvir áudio do Tompero" ${canSpeak ? "" : "disabled title='Seu navegador não toca a voz provisória'"}>
+      <button class="play" type="button" aria-label="Ouvir áudio do Tompero">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>
       </button>
       <div class="wave" aria-hidden="true">${bars.map(h => `<i style="height:${h}px"></i>`).join("")}</div>
-      <div class="side"><img src="assets/avatar.jpg" alt=""><span class="dur">0:${String(secs).padStart(2,"0")}</span></div>
+      <div class="side"><img src="assets/avatar.jpg" alt=""><span class="dur">${fmt(secs)}</span></div>
     </div>${meta(false)}<span class="clear"></span>`);
   el.style.padding = "0 0 6px";
-  const btn = el.querySelector(".play"), waves = [...el.querySelectorAll(".wave i")];
-  let timer = null;
+  el.dataset.audio = src;
+  const btn = el.querySelector(".play"), waves = [...el.querySelectorAll(".wave i")], dur = el.querySelector(".dur");
   const PLAY = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>';
   const STOP = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
-  const reset = () => { clearInterval(timer); timer = null; btn.innerHTML = PLAY; waves.forEach(w => w.classList.remove("on")); };
+  const paint = k => waves.forEach((w,i) => w.classList.toggle("on", i/waves.length <= k));
+
+  // arquivo gravado
+  let fileOk = null; // null = carregando, true = existe, false = usar voz provisória
+  const audio = new Audio(); audio.preload = "metadata";
+  audio.addEventListener("loadedmetadata", () => { fileOk = true; if (isFinite(audio.duration)) { secs = audio.duration; dur.textContent = fmt(secs); } });
+  audio.addEventListener("error", () => { fileOk = false; if (!canSpeak) { btn.disabled = true; btn.title = "Áudio indisponível"; } });
+  audio.addEventListener("timeupdate", () => { if (audio.duration) paint(audio.currentTime/audio.duration); });
+  audio.addEventListener("ended", () => { btn.innerHTML = PLAY; paint(-1); });
+  audio.addEventListener("pause", () => { if (!audio.ended) btn.innerHTML = PLAY; });
+  audio.src = src;
+
+  // voz provisória
+  let timer = null;
+  const stopSpeech = () => { clearInterval(timer); timer = null; btn.innerHTML = PLAY; paint(-1); };
+  function speak(){
+    if (timer) { speechSynthesis.cancel(); stopSpeech(); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find(v => /fr[-_]FR/i.test(v.lang)) || voices.find(v => /^fr/i.test(v.lang));
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "fr-FR"; }
+    u.rate = 1.02; u.pitch = 1.25;
+    const start = Date.now(), total = secs*1000;
+    btn.innerHTML = STOP;
+    timer = setInterval(() => paint(Math.min(1, (Date.now()-start)/total)), 120);
+    u.onend = stopSpeech; u.onerror = stopSpeech;
+    speechSynthesis.speak(u);
+  }
+
   btn.onclick = () => {
-    if (!canSpeak) return;
     try {
-      if (timer) { speechSynthesis.cancel(); reset(); return; }
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}]/gu,""));
-      const voices = speechSynthesis.getVoices();
-      const v = voices.find(v => /fr[-_]FR/i.test(v.lang)) || voices.find(v => /^fr/i.test(v.lang));
-      if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "fr-FR"; }
-      u.rate = 1.02; u.pitch = 1.25;
-      const start = Date.now(), total = secs*1000;
-      btn.innerHTML = STOP;
-      timer = setInterval(() => {
-        const k = Math.min(1, (Date.now()-start)/total);
-        waves.forEach((w,i) => w.classList.toggle("on", i/waves.length <= k));
-      }, 120);
-      u.onend = reset; u.onerror = reset;
-      speechSynthesis.speak(u);
-    } catch { reset(); }
+      if (fileOk !== false) {
+        if (!audio.paused) { audio.pause(); btn.innerHTML = PLAY; return; }
+        if (playing && playing !== audio) playing.pause();
+        if (canSpeak) speechSynthesis.cancel();
+        playing = audio;
+        btn.innerHTML = STOP;
+        audio.play().catch(() => { fileOk = false; btn.innerHTML = PLAY; if (canSpeak) speak(); });
+      } else if (canSpeak) speak();
+    } catch { stopSpeech(); }
   };
   return el;
 }
@@ -441,11 +471,11 @@ Exemplos de tom: "UH LA LA! O seu prrato ficou excelente. Já pode ser chamada d
 Regras:
 - Comente detalhes que REALMENTE aparecem na foto.
 - Escala: nota >= 8 = "positiva"; 5 a 7,9 = "neutra"; < 5 = "negativa". Bolotas jogadas sem nenhum capricho = negativa.
-- Se a foto não for de comida de gato/prato para gato, e_prato = false: responda brincando e peça a foto do prato (nota 0, categoria "neutra").
+- Se a foto não for de comida de gato/prato para gato, e_prato = false: no campo "texto", responda brincando e peça a foto do prato (nota 0, categoria "neutra").
 - Se aparecer algo perigoso para gatos (cebola, alho, chocolate, uva, osso cozido, álcool), avise com carinho e dê no máximo "neutra".
 - Não cite outras marcas, não faça promessas de saúde ou nutrição, não fale de preços.
 Responda SOMENTE com JSON neste formato:
-{"e_prato": true, "nota": 8.5, "categoria": "positiva", "audio": "frase curta para o áudio, até 22 palavras", "texto": "comentário de 1 a 2 frases sobre detalhes da foto, até 40 palavras", "balao": "2 a 4 palavras para o balão do card"}`;
+{"e_prato": true, "nota": 8.5, "categoria": "positiva", "texto": "comentário de 1 a 2 frases sobre detalhes da foto, até 40 palavras", "balao": "2 a 4 palavras para o balão do card"}`;
 
 async function toDataURL(blob){ return new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(blob); }); }
 async function evaluateWorker(blob){
@@ -458,7 +488,6 @@ function normalize(r){
   const nota = Math.max(0, Math.min(10, Number(r.nota) || 0));
   const cat = ["positiva","neutra","negativa"].includes(r.categoria) ? r.categoria : (nota >= 8 ? "positiva" : nota >= 5 ? "neutra" : "negativa");
   return { e_prato: r.e_prato !== false, nota, categoria: cat,
-    audio: String(r.audio || pick(LINES[cat])).slice(0, 220),
     texto: String(r.texto || GENERIC[cat]).slice(0, 320),
     balao: String(r.balao || "").slice(0, 40) };
 }
@@ -485,7 +514,7 @@ async function evaluateDemo(img){
   let nota = Math.max(1.5, Math.min(9.7, 1.2 + colorful/9 + detail*14));
   nota = Math.round(nota*10)/10;
   const cat = nota >= 8 ? "positiva" : nota >= 5 ? "neutra" : "negativa";
-  return { e_prato:true, nota, categoria:cat, audio: pick(LINES[cat]), texto: GENERIC[cat], balao: cat==="positiva" ? "Magnifique!" : cat==="neutra" ? "Falta tompero!" : "Non non non!" };
+  return { e_prato:true, nota, categoria:cat, texto: GENERIC[cat], balao: cat==="positiva" ? "Magnifique!" : cat==="neutra" ? "Falta tompero!" : "Non non non!" };
 }
 
 function loadImg(src){ return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; }); }
@@ -527,13 +556,13 @@ async function handlePhoto(src, preset){
 
   if (!r.e_prato){
     setStatus();
-    await say(r.audio || "Non non, Márcia. Isso non é prrato de gato! Me manda a foto da tigela que você montou.");
+    await say(r.texto || "Non non, Márcia. Isso non é prrato de gato! Me manda a foto da tigela que você montou.");
     quick([{ label:"Mandar outro prato", primary:true, run: openSheet }]);
     busy = false; return;
   }
   lastResult = { r, src };
   setStatus("gravando áudio…"); await sleep(1300); setStatus();
-  audioBubble(r.audio);
+  audioBubble(r.categoria);
   await sleep(500);
   await say(r.texto, 900);
   await sleep(250);
